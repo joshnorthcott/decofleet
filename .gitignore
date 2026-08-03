@@ -1,0 +1,41 @@
+# Build outputs
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Secrets — NEVER commit
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+!appsettings.Production.json
+*.pfx
+*.pem
+secrets.json
+local.settings.json
+
+# Logs
+*.log
+logs/
+
+# Test results
+TestResults/
+coverage/
+
+# Node (frontend)
+node_modules/
+.next/
+dist/
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rider / JetBrains
+.idea/
+
+# dotnet tools
+.config/dotnet-tools.json

@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: decofleet-pg
+    environment:
+      POSTGRES_DB: decofleet_db
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d decofleet_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── .NET API ────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: decofleet-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: >-
+        Host=postgres;Port=5432;Database=decofleet_db;
+        Username=${DB_USER:-postgres};Password=${DB_PASSWORD}
+      Jwt__SecretKey: ${JWT_SECRET:?JWT_SECRET is required}
+      Jwt__Issuer: decofleet-api
+      Jwt__Audience: decofleet-client
+      Jwt__AccessTokenExpiryMinutes: "60"
+      AllowedOrigins__0: http://localhost:3000
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── pgAdmin (optional — comment out if not needed) ─────────────────────────
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: decofleet-pgadmin
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@decofleet.mx}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - postgres
+
+volumes:
+  pgdata:
